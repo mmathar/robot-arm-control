@@ -4,38 +4,21 @@
 #include <Adafruit_PWMServoDriver.h>
 
 #include "RobotMotor.h"
+#include "Vector2.h"
 
-namespace EEZYBot
+namespace RobotTools
 {
     /*! Describe the position (both actual and wanted) as polar coordinates:
     */
     struct GripperPosition
     {
         float rotation; // roation around the robots main axis (equivalent to rotation of baseMotor)
-        float height;  // the height the gripper is at (0 = lowest possible, 1 = highest possible)
-        float distance; // how far extended the gripper is (0 = closest possible to robot, 1 = furthest possible) 
+        float height;  // the height the gripper is at. 0 at rest position
+        float distance; // how far extended the gripper is. 0 at rest position
         float gripper;      
     };
 
-    /*struct Vector2
-    {
-        Vector2(float x, float y) : x(x), y(y) {}
-
-        float x, y;
-
-        float length()
-        {
-            return sqrt(x * x + y * y);
-        }
-
-        void normalize() 
-        {
-            float factor = 1.0f / length();
-            x *= factor;
-            y *= factor;
-        }
-    };
-
+    /*
     struct Edge
     {
         Vector2 start, end;
@@ -64,6 +47,12 @@ namespace EEZYBot
        void setGripperOpeningAngle(float halfAngle); 
        GripperPosition getCurrentPosition();
 
+       // returns the length of both the primary and secondary arm
+       // (they are the same length)
+       float getArmLength() const;
+
+       // set the angles for the motors directly. Mostly useful for debugging.
+       // Will screw up things if mixed with "moveGripperTo" calls.
        void setDirectSmallArmRotation(const double value);
        void setDirectMainArmRotation(const double value);
        void setDirectBaseRotation(const double value);
@@ -72,6 +61,8 @@ namespace EEZYBot
       private:
         void projectIntoWorkingArea(GripperPosition& position);
         void initializeWorkArea();
+        float calculateDistance(float alpha, float beta);
+        float calculateHeight(float alpha, float beta);
 
       private:
         // the servos making up the robot arm
@@ -82,7 +73,7 @@ namespace EEZYBot
         Motor gripperMotor;
         GripperPosition currentPosition;
         //Edge workAreaEdges[40];
-    };
-}; // namespace EEZYBot
+    }; // class RobotArm
+}; // namespace RobotTools
 
 #endif

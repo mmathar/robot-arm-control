@@ -1,6 +1,6 @@
 #include "RobotArm.h"
 
-EEZYBot::RobotArm arm;
+RobotTools::RobotArm arm;
 
 void setup() {
   Serial.begin(9600);
@@ -16,7 +16,7 @@ char input[maxInputSize];
 int offset = 0;
 
 
-bool processMessage(char* keyword, float valueA, float valueB, float valueC, float valueD, EEZYBot::GripperPosition& out) {
+bool processMessage(char* keyword, float valueA, float valueB, float valueC, float valueD, RobotTools::GripperPosition& out) {
   if(strcmp(keyword, "GET") == 0) {
     String s = "RETURN printout:\n";
     s += String("   ") + out.rotation + "\n";
@@ -53,7 +53,7 @@ bool readNextToken(char* start, char*& next, char separator) {
   return false;
 }
 
-bool readLine(char* line, EEZYBot::GripperPosition& out) {
+bool readLine(char* line, RobotTools::GripperPosition& out) {
   char* keyword = line;
   char* valueA = 0;
   char* valueB = 0;
@@ -71,7 +71,7 @@ bool readLine(char* line, EEZYBot::GripperPosition& out) {
   return false;
 }
 
-bool readSerialInput(EEZYBot::GripperPosition& out)
+bool readSerialInput(RobotTools::GripperPosition& out)
 {
   if(!Serial.available())
     return false;
@@ -104,7 +104,7 @@ bool readSerialInput(EEZYBot::GripperPosition& out)
 }
 
 void loop() {
-  EEZYBot::GripperPosition newPosition = arm.getCurrentPosition();
+  RobotTools::GripperPosition newPosition = arm.getCurrentPosition();
   if(readSerialInput(newPosition))
   {
     arm.moveGripperTo(newPosition);

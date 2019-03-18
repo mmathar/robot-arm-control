@@ -3,7 +3,7 @@
 
 #include <Adafruit_PWMServoDriver.h>
 
-namespace EEZYBot
+namespace RobotTools
 {
     // Used to restrict the values for "pin" in the constructor to allowed ones
     // (the Servo Driver has 16 pins) 
@@ -53,6 +53,11 @@ namespace EEZYBot
         //  motor.setMaximum(470, 180);
         void setMinimum(unsigned short pulseLength, short degrees);
         void setMaximum(unsigned short pulseLength, short degrees);
+        short getMinimumAngle() const;
+        short getMaximumAngle() const;
+        float getMinimumAngleRad() const;
+        float getMaximumAngleRad() const;
+
         // optional. Set the position the servo will start at and return to if returnToRest is called.
         void setRestPosition(short degrees);
 
@@ -96,7 +101,7 @@ namespace EEZYBot
         short maxDegrees;
         short restDegrees;
         float currentAngle;
-    };
-};
+    }; // class RobotMotor
+}; // namespace RobotTools
 
-#endif
+#endif // ROBOTMOTOR_H
