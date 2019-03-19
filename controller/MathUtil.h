@@ -12,10 +12,8 @@ namespace RobotTools
     }
 
     // convert radiant to degrees
-    float radToDegree(float value) 
-    {
-        return value / M_PI * 180.0f;
-    }
+    float radToDegree(float value);
+    
 }; // namespace RobotTools
 
 #endif // MATHUTIL_H

@@ -1,4 +1,5 @@
 #include "RobotMotor.h"
+#include "MathUtil.h"
 
 namespace RobotTools
 {
@@ -100,10 +101,5 @@ namespace RobotTools
     float Motor::getAngle()
     {
         return currentAngle;
-    }
-
-    float Motor::clampToBoundaries(float angle)
-    {
-        return clamp((float)minDegrees, angle, (float)maxDegrees);
     }
 }; // namespace RobotTools

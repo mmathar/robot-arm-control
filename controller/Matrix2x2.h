@@ -12,7 +12,11 @@ namespace RobotTools
 
         // careful: only the value 0 and 1 for row and column are allowed!
         // this is nothing more than a glorified array access
-        float& at(short row, short column);
+        inline float& at(short row, short column)
+        {
+            return values[row * 2 + column];
+        }
+
         Matrix2x2 inverse();
         float determinant();
 

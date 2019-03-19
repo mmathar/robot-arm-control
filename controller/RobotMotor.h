@@ -73,21 +73,8 @@ namespace RobotTools
         void returnToRest();
         // get the current rotational angle
         float getAngle();
-        // ensure that angle lies within the boundaries specified for this motor
-        float clampToBoundaries(float angle);
 
     private:
-
-        // if value is outside of [lowerBound, upperBound] move it towards the closest boundary
-        template<typename T>
-        T clamp(T lowerBound, T value, T upperBound)
-        {
-            if(value < lowerBound)
-                return lowerBound;
-            if(value > upperBound)
-                return upperBound;
-            return value;
-        }
 
         // compute the pulse length from a given angle
         unsigned short degreesToPulse(float value);

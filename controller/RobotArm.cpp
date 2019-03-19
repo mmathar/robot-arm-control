@@ -148,7 +148,7 @@ namespace RobotTools
             alpha += dampingFactor * (inverseJacobi.at(0, 0) * distanceError + inverseJacobi.at(0, 1) * heightError);
             beta += dampingFactor * (inverseJacobi.at(1, 0) * distanceError + inverseJacobi.at(1, 1) * heightError);
 
-            // clamp to motors allowed range
+            // clamp to motor's allowed range
             alpha = clamp(smallArmMotor.getMinimumAngleRad(), alpha, smallArmMotor.getMaximumAngleRad());
             beta = clamp(mainArmMotor.getMinimumAngleRad(), beta, mainArmMotor.getMaximumAngleRad());
         }

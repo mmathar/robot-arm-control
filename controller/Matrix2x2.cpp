@@ -11,11 +11,6 @@ namespace RobotTools
     Matrix2x2::Matrix2x2() : Matrix2x2(1.0f, 0.0f, 0.0f, 1.0f) 
     {
     }
-
-    float& Matrix2x2::at(short row, short column) 
-    {
-        return values[row * 2 + column];
-    }
     
     Matrix2x2 Matrix2x2::inverse() 
     {
