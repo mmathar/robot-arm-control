@@ -1,112 +1,107 @@
 #include "RobotArm.h"
+#include "SerialConnection.h"
 
 RobotTools::RobotArm arm;
+RobotTools::SerialConnection connection;
 
 void setup() {
-  Serial.begin(9600);
-  Serial.setTimeout(1);
-  Serial.println("EEZYBotarm MK2 test!;\n");
+  connection.setup();
   arm.setup();
   delay(10);
   //arm.returnToRest();
 }
 
-const int maxInputSize = 100;
-char input[maxInputSize];
-int offset = 0;
-
-
-bool processMessage(char* keyword, float valueA, float valueB, float valueC, float valueD, RobotTools::GripperPosition& out) {
-  if(strcmp(keyword, "GET") == 0) {
-    String s = "RETURN printout:\n";
-    s += String("   ") + out.rotation + "\n";
-    s += String("   ") + out.distance + "\n";
-    s += String("   ") + out.height + ";\n";
-    Serial.write(s.c_str());
-    return false;
-  } else if(strcmp(keyword, "SET-DIRECT") == 0) {
-    arm.setDirectBaseRotation(valueA);
-    arm.setDirectMainArmRotation(valueB);
-    arm.setDirectSmallArmRotation(valueC);
-    arm.setDirectGripperRotation(valueD);
-  } else if(strcmp(keyword, "SET-POSITION") == 0) {
-    out.rotation = valueA;
-    out.distance = valueB;
-    out.height = valueC;
-    out.gripper = valueD;  
-  }
-  else {
-    Serial.write((String("Unknown command: ") + keyword + ";\n").c_str());
-    return false;
-  }
-  return true;
-}
-
-bool readNextToken(char* start, char*& next, char separator) {
-  char* tokenEnd = strchr(start, separator);
-  if (tokenEnd != 0)
-  {
-      *tokenEnd = 0;
-      next = tokenEnd + 1;
-      return true;
-  }
-  return false;
-}
-
-bool readLine(char* line, RobotTools::GripperPosition& out) {
-  char* keyword = line;
-  char* valueA = 0;
-  char* valueB = 0;
-  char* valueC = 0;
-  char* valueD = 0;
-  char* tmp = 0;
-  if(readNextToken(keyword, valueA, ' ') 
-    && readNextToken(valueA, valueB, ' ')
-    && readNextToken(valueB, valueC, ' ')
-    && readNextToken(valueC, valueD, ' '))
-  {
-    return processMessage(keyword, atof(valueA), atof(valueB), atof(valueC), atof(valueD), out);
-  }
-
-  return false;
-}
-
-bool readSerialInput(RobotTools::GripperPosition& out)
+// handle requests for parameter values (just return a printout)
+void processGet()
 {
-  if(!Serial.available())
-    return false;
-
-  byte size = Serial.readBytes(input + offset, maxInputSize - 1 - offset);
-  input[size + offset] = 0;
-
-  if(maxInputSize - 1 - offset <= 0) {
-    Serial.write("Buffer overflow!;\n");
-    Serial.write((String("Buffer: \"") + input + "\";\n").c_str());
-  }
-
-  bool result = false;
-  char* current = input;
-  char* next = 0;
-  while(readNextToken(current, next, ';')) {
-    result = result || readLine(current, out);
-    current = next;
-  }
-
-  char* bufferEnd = input + (size + offset); 
-  if(current < bufferEnd) {
-    offset = bufferEnd - current;
-    memmove(input, current, offset);
-  } else {
-    offset = 0;
-  }
-    
-  return result;
+    RobotTools::GripperPosition position = arm.getCurrentPosition();
+    String s = "RETURN printout:\n";
+    s += String("   ") + position.rotation + "\n";
+    s += String("   ") + position.distance + "\n";
+    s += String("   ") + position.height + " \n";
+    s += String("   ") + position.gripper + ";\n";
+    Serial.write(s.c_str());
 }
 
-void loop() {
-  RobotTools::GripperPosition newPosition = arm.getCurrentPosition();
-  if(readSerialInput(newPosition))
-  {
+// the remote party wants the arm to move the gripper to a new specified position
+void processSetPosition(RobotTools::Line& line)
+{
+    if(line.countParts() != 4)
+        return;
+
+    RobotTools::GripperPosition newPosition;
+    newPosition.rotation = line.parseFloat();
+    newPosition.distance = line.parseFloat();
+    newPosition.height = line.parseFloat();
+    newPosition.gripper = line.parseFloat(); 
     arm.moveGripperTo(newPosition);
-  }
+}
+
+// the remote party wants to update the gripper position by a specified delta
+void processUpdatePosition(RobotTools::Line& line)
+{
+    if(line.countParts() != 4)
+        return;
+
+    RobotTools::GripperPosition position = arm.getCurrentPosition();
+    position.rotation += line.parseFloat();
+    position.distance += line.parseFloat();
+    position.height += line.parseFloat();
+    position.gripper += line.parseFloat(); 
+    arm.moveGripperTo(position);
+}
+
+// the remote party wants the servos to assume the positions described by these angles
+void processSetAngles(RobotTools::Line& line)
+{
+    if(line.countParts() != 4)
+        return;
+
+    arm.setDirectBaseRotation(line.parseFloat());
+    arm.setDirectMainArmRotation(line.parseFloat());
+    arm.setDirectSmallArmRotation(line.parseFloat());
+    arm.setDirectGripperRotation(line.parseFloat());
+}
+
+// handles the different message types that may be received
+void processMessage(RobotTools::Line& line)
+{
+    if(line.isEmpty())
+        return;
+
+    const char* keyword = line.parseString();
+    if(strcmp(keyword, "GET") == 0) 
+    {
+       processGet();
+    } 
+    else if(strcmp(keyword, "SET-DIRECT") == 0) 
+    {
+        processSetAngles(line);
+    } 
+    else if(strcmp(keyword, "SET-POSITION") == 0) 
+    {
+       processSetPosition(line); 
+    }
+    else if(strcmp(keyword, "UPDATE-POSITION") == 0) 
+    {
+       processSetPosition(line); 
+    }
+    else 
+    {
+        Serial.write((String("Unknown command: ") + keyword + ";\n").c_str());
+    }
+}
+
+void readCommandsFromSerial()
+{
+    connection.updateBuffer();
+    while(RobotTools::Line line = connection.readLine())
+    {
+        processMessage(line);
+    }
+}
+
+void loop() 
+{
+    readCommandsFromSerial();
 } 
