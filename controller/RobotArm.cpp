@@ -103,7 +103,7 @@ namespace RobotTools
     {
         // Target positions outside of what the robot arm can reach will produce strange results.
         // To remedy this project these positions back into the acceptable area.
-        projectIntoWorkingArea(position);
+        //projectIntoWorkingArea(position);
 
         // Starting angles for the approximation chosen to be kind of "centered"
         float alpha = 0.2f * M_PI; // inclination angle of the horizontal arm ("small arm")
@@ -149,8 +149,8 @@ namespace RobotTools
             beta += dampingFactor * (inverseJacobi.at(1, 0) * distanceError + inverseJacobi.at(1, 1) * heightError);
 
             // clamp to motor's allowed range
-            alpha = clamp(smallArmMotor.getMinimumAngleRad(), alpha, smallArmMotor.getMaximumAngleRad());
-            beta = clamp(mainArmMotor.getMinimumAngleRad(), beta, mainArmMotor.getMaximumAngleRad());
+            //alpha = clamp(smallArmMotor.getMinimumAngleRad(), alpha, smallArmMotor.getMaximumAngleRad());
+            //beta = clamp(mainArmMotor.getMinimumAngleRad(), beta, mainArmMotor.getMaximumAngleRad());
         }
 
         // check for nasties
@@ -165,7 +165,20 @@ namespace RobotTools
         gripperMotor.rotateTo(position.gripper); 
         baseMotor.rotateTo(position.rotation);
 
-        currentPosition = position;
+        updateCurrentPosition();
+    }
+
+    // update the position from the actual motor positions
+    // this is necessary because the robot movement does not necessarily correspond to what was 
+    // given to the last call of moveGripperTo (small errors occurr and the point may have been outside of the working area)
+    void RobotArm::updateCurrentPosition()
+    {
+        float alpha = (90.0f - smallArmMotor.getAngle()) / 180.0f * M_PI;
+        float beta = mainArmMotor.getAngle() / 180.0f * M_PI;
+        currentPosition.rotation = baseMotor.getAngle();
+        currentPosition.distance = calculateDistance(alpha, beta);
+        currentPosition.height = calculateHeight(alpha, beta);
+        currentPosition.gripper = gripperMotor.getAngle();
     }
 
     void RobotArm::projectIntoWorkingArea(GripperPosition& position) 

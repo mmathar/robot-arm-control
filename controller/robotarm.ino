@@ -8,7 +8,7 @@ void setup() {
   connection.setup();
   arm.setup();
   delay(10);
-  //arm.returnToRest();
+  arm.returnToRest();
 }
 
 // handle requests for parameter values (just return a printout)
@@ -27,7 +27,10 @@ void processGet()
 void processSetPosition(RobotTools::Line& line)
 {
     if(line.countParts() != 4)
-        return;
+    {
+       connection.sendError("SetPosition line doesn't have 4 parts!");
+       return;
+    }
 
     RobotTools::GripperPosition newPosition;
     newPosition.rotation = line.parseFloat();
@@ -41,7 +44,10 @@ void processSetPosition(RobotTools::Line& line)
 void processUpdatePosition(RobotTools::Line& line)
 {
     if(line.countParts() != 4)
-        return;
+    {
+       connection.sendError("UpdatePosition line doesn't have 4 parts!");
+       return;
+    }
 
     RobotTools::GripperPosition position = arm.getCurrentPosition();
     position.rotation += line.parseFloat();
@@ -55,7 +61,10 @@ void processUpdatePosition(RobotTools::Line& line)
 void processSetAngles(RobotTools::Line& line)
 {
     if(line.countParts() != 4)
-        return;
+    {
+      connection.sendError("SetAngles line doesn't have 4 parts!");
+      return;
+    }
 
     arm.setDirectBaseRotation(line.parseFloat());
     arm.setDirectMainArmRotation(line.parseFloat());
@@ -67,7 +76,10 @@ void processSetAngles(RobotTools::Line& line)
 void processMessage(RobotTools::Line& line)
 {
     if(line.isEmpty())
+    {
+        connection.sendError("Line was empty!");
         return;
+    }
 
     const char* keyword = line.parseString();
     if(strcmp(keyword, "GET") == 0) 
@@ -84,11 +96,11 @@ void processMessage(RobotTools::Line& line)
     }
     else if(strcmp(keyword, "UPDATE-POSITION") == 0) 
     {
-       processSetPosition(line); 
+       processUpdatePosition(line); 
     }
     else 
     {
-        Serial.write((String("Unknown command: ") + keyword + ";\n").c_str());
+        connection.sendError(String("Unknown command: ") + keyword);
     }
 }
 

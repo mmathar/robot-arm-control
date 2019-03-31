@@ -11,18 +11,20 @@ namespace RobotTools
     class Line
     {
     public:
-        Line(char* data);
+        // data points to the beginning of the line, end to the address after the last readable character
+        Line(char* data, char* end);
         char* parseString();
         float parseFloat();
         int parseInt();
-        short countParts(); // how many parts separated by ' ' does this line have?
-        bool isEmpty(); // no further part left?
+        short countParts() const; // how many parts separated by ' ' does this line have?
+        bool isEmpty() const; // no further part left?
 
         // is this line valid? (not null)
         operator bool() const;
 
     private:
         char* current;
+        char* lineEnd;
     };
 
     // Reads *whole* lines (terminated by ';') from the serial connection.
@@ -49,6 +51,9 @@ namespace RobotTools
         //          DON'T delete it. 
         //          DON'T keep the pointer for future use - the content may change. (if necessary copy)
         Line readLine();
+
+        // sends an error message
+        void sendError(String message);
 
     private:
         void leftAlignBuffer();

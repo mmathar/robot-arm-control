@@ -63,6 +63,7 @@ namespace RobotTools
         void initializeWorkArea();
         float calculateDistance(float alpha, float beta);
         float calculateHeight(float alpha, float beta);
+        void updateCurrentPosition();
 
       private:
         // the servos making up the robot arm

@@ -240,17 +240,9 @@
           </component>
         </children>
       </scrollpane>
-      <component id="237e9" class="javax.swing.JLabel" binding="labelStickX">
+      <component id="237e9" class="javax.swing.JLabel" binding="labelStick">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Label"/>
-        </properties>
-      </component>
-      <component id="3865a" class="javax.swing.JLabel" binding="labelStickY">
-        <constraints>
-          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="Label"/>

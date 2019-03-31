@@ -51,6 +51,7 @@ namespace RobotTools
         } else {
             offset = 0;
         }
+        currentReadPosition = buffer;
     }
 
     // Fetch available data from the serial connection (into the buffer).
@@ -64,9 +65,14 @@ namespace RobotTools
     void SerialConnection::handleOverflow()
     {
         if(BUFFER_SIZE - 1 - offset <= 0) {
-            Serial.write("Buffer overflow!;\n");
-            Serial.write((String("Buffer: \"") + buffer + "\";\n").c_str());
+            sendError("Buffer overflow!");
+            sendError(String("Buffer: \"") + buffer + "\"");
         }
+    }
+
+    void SerialConnection::sendError(String msg)
+    {
+      Serial.write((String("[ERROR] \"") + msg + ";\"\n").c_str());
     }
 
     Line SerialConnection::readLine()
@@ -77,29 +83,34 @@ namespace RobotTools
         {
             *separatorPosition = 0; // remove ';' - separate into two different 0 terminated strings
             currentReadPosition = separatorPosition + 1; // jump to next line
-            return Line(currentLine);
+            return Line(currentLine, separatorPosition);
         }
 
-        return Line(nullptr);
+        return Line(currentLine, currentLine);
     }
 
-    Line::Line(char* data)
+    Line::Line(char* data, char* end)
         : current(data)
+        , lineEnd(end)
     {
 
     }
 
     char* Line::parseString()
     {      
+        if(current >= lineEnd)
+            return nullptr;
+
         char* start = current;
         char* end = strchr(current, ' ');
         if (end != 0)
         {
             *end = 0;
             current = end + 1;
-            return start;
+        } else {
+            current = lineEnd;
         }
-        return nullptr;
+        return start;
     }
 
     float Line::parseFloat()
@@ -107,6 +118,7 @@ namespace RobotTools
         char* str = parseString();
         if(str)
             return atof(str);
+        Serial.println("[ERROR:] Could not parse float!;\n");
         return 0.0f;
     }
 
@@ -118,7 +130,7 @@ namespace RobotTools
         return -1;
     }
 
-    short Line::countParts()
+    short Line::countParts() const
     {
         short count = 1;
         char* position = current;
@@ -130,13 +142,13 @@ namespace RobotTools
         return count;
     }
 
-    bool Line::isEmpty()
+    bool Line::isEmpty() const
     {
-        return *current == 0;
+        return current == nullptr || current >= lineEnd || *current == 0;
     }
 
     Line::operator bool() const
     {
-      return current != nullptr && *current != 0;
+      return !isEmpty();
     }
 };

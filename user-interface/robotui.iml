@@ -11,7 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: com.fazecast:jSerialComm:2.4.2" level="project" />
+    <orderEntry type="library" name="Maven: com.fazecast:jSerialComm:2.5.0" level="project" />
     <orderEntry type="library" name="Maven: com.github.strikerx3:jxinput:1.0.0" level="project" />
   </component>
 </module>

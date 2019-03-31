@@ -13,11 +13,15 @@ public class MainWindow {
         textDebug.setText("");
     }
 
-    public void printMessage(String s)
+    public void printMessage(String s, boolean error)
     {
         StyledDocument doc = textDebug.getStyledDocument();
         SimpleAttributeSet keyWord = new SimpleAttributeSet();
-        //StyleConstants.setForeground(keyWord, Color.RED);
+
+        if(error) {
+            StyleConstants.setForeground(keyWord, Color.RED);
+            StyleConstants.setBold(keyWord, true);
+        }
         //StyleConstants.setBackground(keyWord, Color.YELLOW);
         //StyleConstants.setBold(keyWord, true);
         try
@@ -29,6 +33,10 @@ public class MainWindow {
             //vertical.setValue(vertical.getMaximum());
         }
         catch(Exception e) { System.out.println(e); }
+    }
+
+    public JPanel getPanel() {
+        return panel;
     }
 
     public boolean isModePosition() {
@@ -55,16 +63,8 @@ public class MainWindow {
         return sliderDirectGripper.getValue();
     }
 
-    public float getRotation() {
-        return 0.0f;
-    }
-
-    public float getPositionDistance() {
-        return 0.0f;
-    }
-
-    public float getPositionHeight() {
-        return 0.0f;
+    public void setStickPosition(float x, float y) {
+        labelStick.setText("Stick position (" + x + ", " + y + ")");
     }
 
 
@@ -73,9 +73,8 @@ public class MainWindow {
     private JSlider sliderDirectRotation;
     private JSlider sliderDirectMainArm;
     private JSlider sliderDirectSmallArm;
-    public JPanel panel;
-    private  JSlider sliderDirectGripper;
+    private JPanel panel;
+    private JSlider sliderDirectGripper;
     private JScrollPane debugScrollPane;
-    public JLabel labelStickX;
-    public JLabel labelStickY;
+    private JLabel labelStick;
 }
