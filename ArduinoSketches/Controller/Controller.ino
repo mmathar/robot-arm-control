@@ -1,5 +1,5 @@
-#include "RobotArm.h"
-#include "SerialConnection.h"
+#include <RobotArm.h>
+#include <SerialConnection.h>
 
 RobotTools::RobotArm arm;
 RobotTools::SerialConnection connection;
@@ -19,7 +19,6 @@ void processGet()
     s += String("   ") + position.rotation + "\n";
     s += String("   ") + position.distance + "\n";
     s += String("   ") + position.height + " \n";
-    s += String("   ") + position.gripper + ";\n";
     Serial.write(s.c_str());
 }
 
@@ -36,8 +35,14 @@ void processSetPosition(RobotTools::Line& line)
     newPosition.rotation = line.parseFloat();
     newPosition.distance = line.parseFloat();
     newPosition.height = line.parseFloat();
-    newPosition.gripper = line.parseFloat(); 
     arm.moveGripperTo(newPosition);
+
+    float gripperDelta = line.parseFloat();
+    if(gripperDelta < -5.0f) {
+      arm.closeGripper();
+    } else if(gripperDelta > 5.0f) {
+      arm.openGripper();
+    }
 }
 
 // the remote party wants to update the gripper position by a specified delta
@@ -53,8 +58,14 @@ void processUpdatePosition(RobotTools::Line& line)
     position.rotation += line.parseFloat();
     position.distance += line.parseFloat();
     position.height += line.parseFloat();
-    position.gripper += line.parseFloat(); 
     arm.moveGripperTo(position);
+
+    float gripperDelta = line.parseFloat();
+    if(gripperDelta < -5.0f) {
+      arm.closeGripper();
+    } else if(gripperDelta > 5.0f) {
+      arm.openGripper();
+    }
 }
 
 // the remote party wants the servos to assume the positions described by these angles

@@ -14,15 +14,16 @@ namespace RobotTools
     {
         float rotation; // roation around the robots main axis (equivalent to rotation of baseMotor)
         float height;  // the height the gripper is at. 0 at rest position
-        float distance; // how far extended the gripper is. 0 at rest position
-        float gripper;      
-    };
+        float distance; // how far extended the gripper is. 0 at rest position 
 
-    /*
-    struct Edge
-    {
-        Vector2 start, end;
-    };*/
+        // helper functions to modify position for next frame
+        // movement limited to one axis (logical, not physical axis)
+        void rotateBase(float angle);
+        void moveForward(float distance);
+        void moveBackward(float distance);
+        void moveUp(float distance);
+        void moveDown(float distance);  
+    };
 
     /*! Control class for an EEZYbotARM MK2
         (http://www.eezyrobots.it/eba_mk2.html)
@@ -38,11 +39,14 @@ namespace RobotTools
        // returns the robot into the default position
        void returnToRest();
        // move the robot so that the gripper ends up at the specified position
-       void moveGripperTo(GripperPosition position);
+       // returns the position the gripper actually ended up at (might be different from the passed position)
+       GripperPosition moveGripperTo(GripperPosition position);
+
        // fully open the gripper
        void openGripper();
        // fully close the gripper
        void closeGripper();
+       bool isGripperOpen();
        // open/close the gripper to the specified half-angle
        void setGripperOpeningAngle(float halfAngle); 
        GripperPosition getCurrentPosition();
@@ -73,7 +77,6 @@ namespace RobotTools
         Motor smallArmMotor;
         Motor gripperMotor;
         GripperPosition currentPosition;
-        //Edge workAreaEdges[40];
     }; // class RobotArm
 }; // namespace RobotTools
 

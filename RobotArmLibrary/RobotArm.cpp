@@ -56,7 +56,7 @@ namespace RobotTools
         smallArmMotor.setMaximum(330, 90);
         smallArmMotor.setRestPosition(90);   
         // The small helper arm starts horizontally (0°) and can rotate 90°
-        mainArmMotor.setMinimum(280, -10);
+        mainArmMotor.setMinimum(280, -5);
         mainArmMotor.setMaximum(420, 50);
         mainArmMotor.setRestPosition(0);   
         // The gripper has an opening (half-)angle of 90° (open) and a value of 0° closed
@@ -71,6 +71,7 @@ namespace RobotTools
         mainArmMotor.returnToRest();
         smallArmMotor.returnToRest();
         gripperMotor.returnToRest();
+        updateCurrentPosition();
     }
 
     float RobotArm::getArmLength() const
@@ -99,7 +100,7 @@ namespace RobotTools
     }
 
     // Move the gripper to the specified position in "robot coordinates".
-    void RobotArm::moveGripperTo(GripperPosition position)
+    GripperPosition RobotArm::moveGripperTo(GripperPosition position)
     {
         // Target positions outside of what the robot arm can reach will produce strange results.
         // To remedy this project these positions back into the acceptable area.
@@ -147,25 +148,20 @@ namespace RobotTools
             const float dampingFactor = 0.8f;
             alpha += dampingFactor * (inverseJacobi.at(0, 0) * distanceError + inverseJacobi.at(0, 1) * heightError);
             beta += dampingFactor * (inverseJacobi.at(1, 0) * distanceError + inverseJacobi.at(1, 1) * heightError);
-
-            // clamp to motor's allowed range
-            //alpha = clamp(smallArmMotor.getMinimumAngleRad(), alpha, smallArmMotor.getMaximumAngleRad());
-            //beta = clamp(mainArmMotor.getMinimumAngleRad(), beta, mainArmMotor.getMaximumAngleRad());
         }
 
         // check for nasties
         if(isnan(alpha) || isinf(alpha) || isnan(beta) || isinf(beta))
-            return;
-
+            return currentPosition;
         
         // 90.0 - alpha because the small arm motor is mounted from the other side (compared to the mainArmMotor)
         // -> it turns in the opposite direction
         smallArmMotor.rotateTo(90.0f - radToDegree(alpha));   
         mainArmMotor.rotateTo(radToDegree(beta));
-        gripperMotor.rotateTo(position.gripper); 
         baseMotor.rotateTo(position.rotation);
 
         updateCurrentPosition();
+        return currentPosition;
     }
 
     // update the position from the actual motor positions
@@ -178,8 +174,8 @@ namespace RobotTools
         currentPosition.rotation = baseMotor.getAngle();
         currentPosition.distance = calculateDistance(alpha, beta);
         currentPosition.height = calculateHeight(alpha, beta);
-        currentPosition.gripper = gripperMotor.getAngle();
     }
+
 
     void RobotArm::projectIntoWorkingArea(GripperPosition& position) 
     {
@@ -207,6 +203,11 @@ namespace RobotTools
         gripperMotor.rotateTo(0);
     }
 
+    bool RobotArm::isGripperOpen()
+    {
+        return gripperMotor.getAngle() >= 45.0f; // more than halfway open?
+    }
+
     void RobotArm::setGripperOpeningAngle(float angle)
     {
         gripperMotor.rotateTo(angle);
@@ -220,20 +221,50 @@ namespace RobotTools
     void RobotArm::setDirectSmallArmRotation(const double value)
     {
         smallArmMotor.rotateTo(value);
+        updateCurrentPosition();
     }
 
     void RobotArm::setDirectMainArmRotation(const double value)
     {
         mainArmMotor.rotateTo(value);
+        updateCurrentPosition();
     }
 
     void RobotArm::setDirectBaseRotation(const double value)
     {
         baseMotor.rotateTo(value);
+        updateCurrentPosition();
     }
 
     void RobotArm::setDirectGripperRotation(const double value)
     {
         gripperMotor.rotateTo(value);
+        updateCurrentPosition();
     }
+
+    void GripperPosition::rotateBase(float angle)
+    {
+        rotation += angle;
+    }
+
+    void GripperPosition::moveForward(float distance)
+    {
+        this->distance += distance;
+    }
+
+    void GripperPosition::moveBackward(float distance)
+    {
+        this->distance -= distance;
+    }
+
+    void GripperPosition::moveUp(float distance)
+    {
+        this->height -= distance;
+    }
+
+    void GripperPosition::moveDown(float distance)
+    {
+        this->height += distance;
+    }
+
 }; // namespace RobotTools
