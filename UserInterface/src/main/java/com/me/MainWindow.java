@@ -5,46 +5,100 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 public class MainWindow {
 
     public MainWindow()
     {
         textDebug.setText("");
+
+        // If the sliders for the angles are moved we need to know
+        // (because this should override any controller input)
+        sliderDirectRotation.addChangeListener((x) -> directValuesDirty = true);
+        sliderDirectGripper.addChangeListener((x) -> directValuesDirty = true);
+        sliderDirectMainArm.addChangeListener((x) -> directValuesDirty = true);
+        sliderDirectSmallArm.addChangeListener((x) -> directValuesDirty = true);
     }
 
-    public void printMessage(String s, boolean error)
-    {
+    public void addCommPortRefreshListener(ActionListener listener) {
+        btRefreshArduino.addActionListener(listener);
+    }
+
+    public void addCommPortConnectListener(ActionListener listener) {
+        btConnectArduino.addActionListener(listener);
+    }
+
+    public void addControllerConnectListener(ActionListener listener) {
+        btConnectController.addActionListener(listener);
+    }
+
+    public void setCommPortConnected(boolean connected) {
+        // is an arduino connected?
+        // without an arduino we can't really do anything useful
+        // so we need to disable stuff
+        if(connected) {
+            btConnectArduino.setText("Disconnect");
+            btRefreshArduino.setEnabled(false);
+            cbCommPorts.setEnabled(false);
+            sliderDirectSmallArm.setEnabled(true);
+            sliderDirectMainArm.setEnabled(true);
+            sliderDirectGripper.setEnabled(true);
+            sliderDirectRotation.setEnabled(true);
+        } else {
+            btConnectArduino.setText("Connect");
+            btRefreshArduino.setEnabled(true);
+            cbCommPorts.setEnabled(true);
+            sliderDirectSmallArm.setEnabled(false);
+            sliderDirectMainArm.setEnabled(false);
+            sliderDirectGripper.setEnabled(false);
+            sliderDirectRotation.setEnabled(false);
+        }
+    }
+
+    public void setControllerConnected(boolean connected) {
+        if(connected) {
+            btConnectController.setEnabled(false);
+        } else {
+            btConnectController.setEnabled(true);
+        }
+    }
+
+    public void printMessage(String s, boolean error) {
         StyledDocument doc = textDebug.getStyledDocument();
         SimpleAttributeSet keyWord = new SimpleAttributeSet();
 
-        if(error) {
+        if (error) {
             StyleConstants.setForeground(keyWord, Color.RED);
             StyleConstants.setBold(keyWord, true);
         }
-        //StyleConstants.setBackground(keyWord, Color.YELLOW);
-        //StyleConstants.setBold(keyWord, true);
-        try
-        {
-            doc.insertString(doc.getLength(), s, keyWord );
+        try {
+            doc.insertString(doc.getLength(), s + '\n', keyWord);
 
             //panel.revalidate();
             //JScrollBar vertical = debugScrollPane.getVerticalScrollBar();
             //vertical.setValue(vertical.getMaximum());
+        } catch (Exception e) {
+            System.out.println(e);
         }
-        catch(Exception e) { System.out.println(e); }
     }
 
-    public JPanel getPanel() {
-        return panel;
+    public void setComPortList(List<String> commPorts) {
+        cbCommPorts.removeAllItems();
+        for(String s : commPorts) {
+            cbCommPorts.addItem(s);
+        }
     }
 
-    public boolean isModePosition() {
-        return tabbedPane.isEnabledAt(0);
+    public String getSelectedCOMPort() {
+        if(cbCommPorts.getSelectedIndex() != -1)
+            return cbCommPorts.getSelectedItem().toString();
+        return "";
     }
 
-    public boolean isModeDirect() {
-        return tabbedPane.isEnabledAt(1);
+    public boolean didDirectValuesChange() {
+        return directValuesDirty;
     }
 
     public float getDirectBaseRotation() {
@@ -63,18 +117,24 @@ public class MainWindow {
         return sliderDirectGripper.getValue();
     }
 
-    public void setStickPosition(float x, float y) {
-        labelStick.setText("Stick position (" + x + ", " + y + ")");
+    public JPanel getPanel() {
+        return panel;
     }
 
-
+    private boolean directValuesDirty;
+    // variables created by the form designer
+    private JPanel panel;
     private JTextPane textDebug;
     private JTabbedPane tabbedPane;
     private JSlider sliderDirectRotation;
     private JSlider sliderDirectMainArm;
     private JSlider sliderDirectSmallArm;
-    private JPanel panel;
     private JSlider sliderDirectGripper;
     private JScrollPane debugScrollPane;
-    private JLabel labelStick;
+    private JComboBox cbCommPorts;
+    private JButton btRefreshArduino;
+    private JButton btConnectArduino;
+    private JButton btConnectController;
+    private JLabel controllerState;
+    private JPanel directControlTab;
 }

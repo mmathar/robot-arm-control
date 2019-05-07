@@ -13,14 +13,6 @@ import static com.fazecast.jSerialComm.SerialPort.TIMEOUT_NONBLOCKING;
 
 public class SerialConnection {
 
-    DecimalFormat getDecimalFormat() {
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.getDefault());
-        symbols.setDecimalSeparator('.');
-        symbols.setGroupingSeparator(',');
-        DecimalFormat decimal = new DecimalFormat("#0.000", symbols);
-        return decimal;
-    }
-
     public interface Message {
         String serialize();
     };
@@ -91,8 +83,16 @@ public class SerialConnection {
 
     public SerialConnection() {
         listeners = new ArrayList<>();
-        intermediateResult = new StringBuilder();
+        stringBuilder = new StringBuilder();
         opened = false;
+    }
+
+    public List<String> getCommPorts() {
+        List<String> ports = new ArrayList<>();
+        for(SerialPort port : SerialPort.getCommPorts()) {
+            ports.add(port.getSystemPortName());
+        }
+        return ports;
     }
 
     public void initialize(String port) {
@@ -117,31 +117,40 @@ public class SerialConnection {
     public void close() {
         if(opened) {
             comPort.closePort();
+            comPort = null;
             opened = false;
         }
     }
 
-    public void processStep() {
+    public boolean isConnected() {
+        return opened;
+    }
+
+    // Read messages from the serial port (if there are any).
+    // At the current point in time these messages are only
+    // shown to the user (for debugging).
+    public void readMessages() {
+        if(comPort == null)
+            return;
+
         try {
             if (comPort.bytesAvailable() <= 0 || comPort.bytesAvailable() % 4 != 0)
                 return;
 
             byte[] buffer = new byte[comPort.bytesAvailable()];
             int readBytes = comPort.readBytes(buffer, comPort.bytesAvailable());
-
-            for(int i = 0; i < readBytes && i < buffer.length; i++) {
-                intermediateResult.append((char)buffer[i]);
-            }
+            stringBuilder.append(new String(buffer, 0, Math.min(readBytes, buffer.length)));
 
             int index = -1;
-            String result = intermediateResult.toString();
-            while((index = result.indexOf(';')) != -1) {
-                String line = result.substring(0, index);
+            // split into lines (at ';')
+            while((index = stringBuilder.indexOf(";")) != -1) {
+                // extract the line
+                String line = stringBuilder.substring(0, index);
                 line.replace("\n", "");
                 line.replace("\r", "");
-                intermediateResult.delete(0, index + 1);
-                result = intermediateResult.toString();
                 processLine(line);
+                // remove the processed line
+                stringBuilder.delete(0, index + 1);
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -165,6 +174,8 @@ public class SerialConnection {
         }
     }
 
+    // any message we get is basically just debug information from the
+    // microcontroller at this point. Just print it.
     private void processLine(String s) {
         emitMessage(s);
     }
@@ -181,8 +192,16 @@ public class SerialConnection {
         }
     }
 
+    private DecimalFormat getDecimalFormat() {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.getDefault());
+        symbols.setDecimalSeparator('.');
+        symbols.setGroupingSeparator(',');
+        DecimalFormat decimal = new DecimalFormat("#0.000", symbols);
+        return decimal;
+    }
 
-    private StringBuilder intermediateResult;
+
+    private StringBuilder stringBuilder;
     private SerialPort comPort;
     private boolean opened;
     private List<EventListener> listeners;

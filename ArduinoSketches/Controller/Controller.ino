@@ -11,7 +11,7 @@ void setup() {
   arm.returnToRest();
 }
 
-// handle requests for parameter values (just return a printout)
+// handle requests for fetching parameter values (just return a printout)
 void processGet()
 {
     RobotTools::GripperPosition position = arm.getCurrentPosition();
@@ -22,7 +22,8 @@ void processGet()
     Serial.write(s.c_str());
 }
 
-// the remote party wants the arm to move the gripper to a new specified position
+// the remote party (Serial port)
+// wants the arm to move the gripper to a new specified position
 void processSetPosition(RobotTools::Line& line)
 {
     if(line.countParts() != 4)
@@ -37,15 +38,18 @@ void processSetPosition(RobotTools::Line& line)
     newPosition.height = line.parseFloat();
     arm.moveGripperTo(newPosition);
 
+    // discretize the gripper values - only need "open" and "close"
     float gripperDelta = line.parseFloat();
-    if(gripperDelta < -5.0f) {
+    if(gripperDelta < -5.0f) { // 5 is chosen pretty arbitrarily. The sign is what matters.
       arm.closeGripper();
     } else if(gripperDelta > 5.0f) {
       arm.openGripper();
     }
 }
 
-// the remote party wants to update the gripper position by a specified delta
+// the remote party (Serial port)
+// wants to update the gripper position by a specified delta.
+// This is used for controlling the robot using an XBOX controller.
 void processUpdatePosition(RobotTools::Line& line)
 {
     if(line.countParts() != 4)
@@ -60,15 +64,17 @@ void processUpdatePosition(RobotTools::Line& line)
     position.height += line.parseFloat();
     arm.moveGripperTo(position);
 
+    // discretize the gripper values - only need "open" and "close"
     float gripperDelta = line.parseFloat();
-    if(gripperDelta < -5.0f) {
+    if(gripperDelta < -5.0f) { // 5 is chosen pretty arbitrarily. The sign is what matters.
       arm.closeGripper();
     } else if(gripperDelta > 5.0f) {
       arm.openGripper();
     }
 }
 
-// the remote party wants the servos to assume the positions described by these angles
+// The remote party wants the servos to assume the positions described by these angles.
+// This is used for controlling the robot from the UI (the sliders).
 void processSetAngles(RobotTools::Line& line)
 {
     if(line.countParts() != 4)
@@ -95,18 +101,22 @@ void processMessage(RobotTools::Line& line)
     const char* keyword = line.parseString();
     if(strcmp(keyword, "GET") == 0) 
     {
+       // GET: return a printout of the robot's current configuration
        processGet();
     } 
     else if(strcmp(keyword, "SET-DIRECT") == 0) 
     {
+        // SET-DIRECT: directly set the angles for all servos
         processSetAngles(line);
     } 
     else if(strcmp(keyword, "SET-POSITION") == 0) 
     {
+       // SET-POSITION: directly set the gripper position (in ``robot coordinates'')
        processSetPosition(line); 
     }
     else if(strcmp(keyword, "UPDATE-POSITION") == 0) 
     {
+       // UPDATE-POSITION: update the current gripper position by a delta (in ``robot coordinates'')
        processUpdatePosition(line); 
     }
     else 

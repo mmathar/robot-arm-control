@@ -11,171 +11,215 @@ import java.awt.*;
 
 public class Main {
 
-    static MainWindow window;
-    static JFrame frame;
-    static SerialConnection connection;
-
-    static void processLine(String s, boolean error) {
-        window.printMessage(s, error);
+    public static void main(String[] args) {
+        Main app = new Main();
+        app.run();
     }
 
-    static void initializeWindow() {
+    void run() {
+        initializeWindow();
+        setupUIListeners();
+        createConnection();
+        // show initially available COM ports
+        onWantToRefreshCOMListing();
+
+        while (frame.isVisible()) {
+            if (connection.isConnected()) {
+                connection.readMessages();
+                readControllerInput();
+                sendUpdatedPosition();
+            }
+            waitABit();
+        }
+
+        close();
+    }
+
+    void initializeWindow() {
         window = new MainWindow();
         frame = new JFrame("EEZYbotarm MK2 control");
         frame.setContentPane(window.getPanel());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Dimension minSize = new Dimension();
-        minSize.setSize(1200, 800);
+        minSize.setSize(600, 600);
         frame.setMinimumSize(minSize);
         frame.pack();
         frame.setVisible(true);
         frame.repaint();
+
+        window.setControllerConnected(false);
+        window.setCommPortConnected(false);
     }
 
-    public static void main(String[] args) {
-        initializeWindow();
+    void setupUIListeners() {
+        // this has a dual function: connect / disconnect
+        // (the button changes its text depending on context)
+        window.addControllerConnectListener(x -> {
+            if (controller == null)
+                onWantToConnectController();
+            else
+                onWantToDisconnectController();
+        });
+        // dual function too. see above
+        window.addCommPortConnectListener(x -> {
+            if(connectedCOM)
+                onWantToDisconnectCOM();
+            else
+                onWantToConnectCOM();
+        });
+        window.addCommPortRefreshListener(x -> onWantToRefreshCOMListing());
+    }
 
+    void onWantToRefreshCOMListing() {
+        window.setComPortList(connection.getCommPorts());
+    }
+
+
+    void onWantToConnectCOM() {
+        if (window.getSelectedCOMPort().isEmpty()) {
+            window.printMessage("No COM port selected.", true);
+            return;
+        }
+        connection.addListener((str, error) -> window.printMessage(str, error));
+        connection.initialize(window.getSelectedCOMPort());
+        window.printMessage("COM connected.", false);
+        window.setCommPortConnected(true);
+        connectedCOM = true;
+    }
+
+    void onWantToDisconnectCOM() {
+        window.printMessage("COM disconnected.", false);
+        window.setCommPortConnected(false);
+        connectedCOM = false;
+    }
+
+    void onWantToConnectController() {
         try {
             XInputDevice[] devices = XInputDevice.getAllDevices();
-            for(XInputDevice device : devices) {
-                if(device.isConnected()) {
-                    window.printMessage("Connected to controller: " + device.toString() + "\n", false);
+            for (XInputDevice device : devices) {
+                if (device.isConnected()) {
                     controller = device;
                     break;
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        connection = new SerialConnection();
-        connection.addListener((str, error) -> window.printMessage(str, error));
-        connection.initialize("COM4");
-        while(frame.isVisible()) {
-            connection.processStep();
-            dirty = false;
-            updateFromControls();
-            //updateFromUI();
-            if(dirty) {
-                sendUpdate();
-            }
-            try {
-                Thread.sleep(5);
-            } catch (Exception e) {}
+        if (controller == null) {
+            window.printMessage("No controller found.", true);
+            window.setControllerConnected(false);
+        } else {
+            window.printMessage("Controller connected.", false);
+            window.setControllerConnected(true);
         }
+    }
+
+    void onWantToDisconnectController() {
+        controller = null;
+        window.setControllerConnected(false);
+    }
+
+    void createConnection() {
+        connection = new SerialConnection();
+    }
+
+    // calculate the necessary movement from the controller stick
+    // position changes. Only works if a controller is connected.
+    private void readControllerInput() {
+        if (controller == null)
+            return;
+
+        if (!controller.poll()) {
+            // the controller appears to have been disconnected
+            window.setControllerConnected(false);
+            controller = null;
+            return;
+        }
+
+        deltaGripper = 0.0f;
+        deltaBase = 0.0f;
+        deltaHeight = 0.0f;
+        deltaDistance = 0.0f;
+
+        XInputComponentsDelta delta = controller.getDelta();
+        XInputButtonsDelta buttons = delta.getButtons();
+        if (buttons.isPressed(XInputButton.RIGHT_SHOULDER)) {
+            deltaGripper = -90.0f; // close the gripper
+        } else if (buttons.isReleased(XInputButton.RIGHT_SHOULDER)) {
+            deltaGripper = 90.0f; // open the gripper
+        }
+
+        XInputAxesDelta axes = delta.getAxes();
+        stickPosLX += axes.getLXDelta();
+        stickPosLY += axes.getLYDelta();
+        stickPosRY += axes.getRYDelta();
+
+        // is the stick not centered (with some tolerance)?
+        // -> move the arm
+        if (Math.abs(stickPosLX) > 1e-1) {
+            deltaBase = -3.5f * stickPosLX;
+        }
+
+        if (Math.abs(stickPosLY) > 1e-1) {
+            deltaDistance = -1.0f * stickPosLY;
+        }
+
+        if (Math.abs(stickPosRY) > 1e-1) {
+            deltaHeight = 1.0f * stickPosRY;
+        }
+    }
+
+    private void sendUpdatedPosition() {
+        if (dirtyDirectInput) {
+            SerialConnection.MessageDirect msg = connection.new MessageDirect();
+            msg.base = window.getDirectBaseRotation();
+            msg.mainArm = window.getDirectMainArmRotation();
+            msg.smallArm = window.getDirectSmallArmRotation();
+            msg.gripper = window.getDirectGripperRotation();
+            connection.sendMessage((SerialConnection.Message) msg);
+        } else if (dirtyControllerInput) {
+            SerialConnection.MessageUpdate msg = connection.new MessageUpdate();
+            msg.deltaRotation = deltaBase;
+            msg.deltaGripper = deltaGripper;
+            msg.deltaDistance = deltaDistance;
+            msg.deltaHeight = deltaHeight;
+            connection.sendMessage((SerialConnection.Message) msg);
+        }
+
+        dirtyDirectInput = false;
+        dirtyControllerInput = false;
+    }
+
+    private void waitABit() {
+        // Don't overwhelm the poor microcontroller
+        // ...sleep for a bit
+        try {
+            Thread.sleep(5);
+        } catch (Exception e) {
+        }
+    }
+
+    private void close() {
         connection.close();
     }
 
-    private static void updateFromControls() {
-        if(controller == null)
-            return;
+    MainWindow window;
+    JFrame frame;
+    SerialConnection connection;
 
-        if (controller.poll()) {
-            XInputComponentsDelta delta = controller.getDelta();
+    private boolean connectedCOM = false;
 
-            XInputButtonsDelta buttons = delta.getButtons();
-            XInputAxesDelta axes = delta.getAxes();
+    private float deltaGripper = 0.0f;
+    private float deltaBase = 0.0f;
+    private float deltaDistance = 0.0f;
+    private float deltaHeight = 0.0f;
 
-            if (buttons.isPressed(XInputButton.RIGHT_SHOULDER)) {
-                    deltaGripper = -90.0f;
-                    dirty = true;
-            } else if (buttons.isReleased(XInputButton.RIGHT_SHOULDER)) {
-                    deltaGripper = 90.0f;
-                    dirty = true;
-            } else if(Math.abs(deltaGripper) > 1e-2) {
-                deltaGripper = 0.0f;
-                dirty = true;
-            }
+    private XInputDevice controller;
+    private float stickPosLX = 0.0f;
+    private float stickPosLY = 0.0f;
+    private float stickPosRY = 0.0f;
 
-            stickPositionX += axes.getLXDelta();
-            stickPositionY += axes.getLYDelta();
-            stickRPositionY += axes.getRYDelta();
-
-            if(Math.abs(stickPositionX) > 1e-1) {
-                deltaBase = -3.5f * stickPositionX;
-                dirty = true;
-            } else if(Math.abs(deltaBase) > 1e-2) {
-                deltaBase = 0.0f;
-                dirty = true;
-            }
-
-            if(Math.abs(stickPositionY) > 1e-1) {
-                deltaDistance = -1.0f * stickPositionY;
-                dirty = true;
-            } else if(Math.abs(deltaDistance) > 1e-2) {
-                deltaDistance  = 0.0f;
-                dirty = true;
-            }
-
-            if(Math.abs(stickRPositionY) > 1e-1) {
-                deltaHeight = 1.0f * stickRPositionY;
-                dirty = true;
-            } else if(Math.abs(deltaHeight) > 1e-2) {
-                deltaHeight = 0.0f;
-                dirty = true;
-            }
-
-            lastHeight = Math.max(0.0f, Math.min(25.0f, lastHeight));
-            lastDistance = Math.max(-4.3f, Math.min(14.7f, lastDistance));
-
-            window.setStickPosition(stickPositionX, stickRPositionY);
-
-        } else {
-            // Controller is not connected; display a message
-        }
-    }
-
-    private static void updateFromUI() {
-       /* final double eps = 1e-6;
-        final double rotation = window.getDirectBaseRotation();
-        final double smallArmRot = window.getDirectSmallArmRotation();
-        final double mainArmRot = window.getDirectMainArmRotation();
-        final double gripperRot = window.getDirectGripperRotation();
-        if(Math.abs(rotation - lastBaseValue) > eps) {
-            updateProperty("base", rotation);
-            lastBaseValue = rotation;
-        } else if(Math.abs(smallArmRot - lastSmallArmValue) > eps) {
-            updateProperty("smallArm", smallArmRot);
-            lastSmallArmValue = smallArmRot;
-        } else if(Math.abs(mainArmRot - lastMainArmValue) > eps) {
-            updateProperty("mainArm", mainArmRot);
-            lastMainArmValue = mainArmRot;
-        } else if(Math.abs(gripperRot - lastGripperValue) > eps) {
-            updateProperty("gripper", gripperRot);
-            lastGripperValue = gripperRot;
-        }*/
-    }
-
-    private static void sendUpdate() {
-        /*SerialConnection.MessageDirect msg = connection.new MessageDirect();
-        msg.base = lastBaseValue;
-        msg.mainArm = lastMainArmValue;
-        msg.smallArm = lastSmallArmValue;
-        msg.gripper = lastGripperValue;
-        connection.sendMessageDirect(msg);*/
-
-        SerialConnection.MessageUpdate msg = connection.new MessageUpdate();
-        msg.deltaRotation = deltaBase;
-        msg.deltaGripper = deltaGripper;
-        msg.deltaDistance = deltaDistance;
-        msg.deltaHeight = deltaHeight;
-        connection.sendMessage((SerialConnection.Message)msg);
-    }
-
-    private static float deltaGripper = 0.0f;
-    private static float deltaBase = 0.0f;
-    private static float deltaDistance = 0.0f;
-    private static float deltaHeight = 0.0f;
-
-    private static float lastGripperValue = 0.0f;
-    private static float lastSmallArmValue = 0.0f;
-    private static float lastMainArmValue = 0.0f;
-    private static float lastBaseValue = 0.0f;
-    private static float lastDistance = 0.0f;
-    private static float lastHeight = 0.0f;
-    private static XInputDevice controller;
-    private static float stickPositionX = 0.0f;
-    private static float stickPositionY = 0.0f;
-    private static float stickRPositionY = 0.0f;
-    private static boolean dirty = false;
+    private boolean dirtyDirectInput = false;
+    private boolean dirtyControllerInput = false;
 }
