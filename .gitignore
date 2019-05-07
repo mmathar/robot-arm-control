@@ -33,9 +33,9 @@
 
 # Aaaaand similar stuff for java:
 # ------------------------------
-user-interface/.idea
-user-interface/out
-user-interface/target
+UserInterface/.idea
+UserInterface/out
+UserInterface/target
 
 # Compiled class file
 *.class
