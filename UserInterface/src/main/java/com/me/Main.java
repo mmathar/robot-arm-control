@@ -50,6 +50,8 @@ public class Main {
     }
 
     void setupUIListeners() {
+        // if any angle value (sliders) changes mark all as dirty
+        window.addAngleSliderListener(x -> dirtyDirectInput = true);
         // dual function too. see above
         window.addCommPortConnectListener(x -> {
             if (connectedCOM)
@@ -63,7 +65,6 @@ public class Main {
     void onWantToRefreshCOMListing() {
         window.setComPortList(connection.getCommPorts());
     }
-
 
     void onWantToConnectCOM() {
         if (window.getSelectedCOMPort().isEmpty()) {
@@ -89,12 +90,8 @@ public class Main {
 
     void tryFindGamepad() {
         try {
-            boolean oldState = controller != null && controller.isConnected();
             controller = XInputDevice14.getDeviceFor(0);
-            // did the connection state change? show it in the UI!
-            if(controller.isConnected() != oldState) {
-                window.setControllerConnected(controller.isConnected());
-            }
+            window.setControllerConnected(controller.isConnected());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,8 +119,10 @@ public class Main {
         XInputButtonsDelta buttons = delta.getButtons();
         if (buttons.isPressed(XInputButton.RIGHT_SHOULDER)) {
             deltaGripper = -90.0f; // close the gripper
+            dirtyControllerInput = true;
         } else if (buttons.isReleased(XInputButton.RIGHT_SHOULDER)) {
             deltaGripper = 90.0f; // open the gripper
+            dirtyControllerInput = true;
         }
 
         XInputAxesDelta axes = delta.getAxes();
@@ -131,18 +130,22 @@ public class Main {
         stickPosLY += axes.getLYDelta();
         stickPosRY += axes.getRYDelta();
 
-        // is the stick not centered (with some tolerance)?
-        // -> move the arm
+        // left stick right -> gripper right
         if (Math.abs(stickPosLX) > 1e-1) {
             deltaBase = -3.5f * stickPosLX;
+            dirtyControllerInput = true;
         }
 
+        // left stick up -> gripper forward
         if (Math.abs(stickPosLY) > 1e-1) {
             deltaDistance = -1.0f * stickPosLY;
+            dirtyControllerInput = true;
         }
 
+        // right stick up = gripper up
         if (Math.abs(stickPosRY) > 1e-1) {
-            deltaHeight = -1.0f * stickPosRY;
+            deltaHeight = 1.0f * stickPosRY;
+            dirtyControllerInput = true;
         }
     }
 

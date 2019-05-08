@@ -1,6 +1,7 @@
 package com.me;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -10,16 +11,8 @@ import java.util.List;
 
 public class MainWindow {
 
-    public MainWindow()
-    {
+    public MainWindow() {
         textDebug.setText("");
-
-        // If the sliders for the angles are moved we need to know
-        // (because this should override any controller input)
-        sliderDirectRotation.addChangeListener((x) -> directValuesDirty = true);
-        sliderDirectGripper.addChangeListener((x) -> directValuesDirty = true);
-        sliderDirectMainArm.addChangeListener((x) -> directValuesDirty = true);
-        sliderDirectSmallArm.addChangeListener((x) -> directValuesDirty = true);
     }
 
     public void addCommPortRefreshListener(ActionListener listener) {
@@ -28,6 +21,15 @@ public class MainWindow {
 
     public void addCommPortConnectListener(ActionListener listener) {
         btConnectArduino.addActionListener(listener);
+    }
+
+    public void addAngleSliderListener(ChangeListener listener) {
+        // If the sliders for the angles are moved we need to know
+        // (because this should override any controller input)
+        sliderDirectRotation.addChangeListener(listener);
+        sliderDirectGripper.addChangeListener(listener);
+        sliderDirectMainArm.addChangeListener(listener);
+        sliderDirectSmallArm.addChangeListener(listener);
     }
 
     public void setCommPortConnected(boolean connected) {
@@ -93,10 +95,6 @@ public class MainWindow {
         return "";
     }
 
-    public boolean didDirectValuesChange() {
-        return directValuesDirty;
-    }
-
     public float getDirectBaseRotation() {
         return sliderDirectRotation.getValue();
     }
@@ -117,7 +115,6 @@ public class MainWindow {
         return panel;
     }
 
-    private boolean directValuesDirty;
     // variables created by the form designer
     private JPanel panel;
     private JTextPane textDebug;
