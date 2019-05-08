@@ -30,10 +30,6 @@ public class MainWindow {
         btConnectArduino.addActionListener(listener);
     }
 
-    public void addControllerConnectListener(ActionListener listener) {
-        btConnectController.addActionListener(listener);
-    }
-
     public void setCommPortConnected(boolean connected) {
         // is an arduino connected?
         // without an arduino we can't really do anything useful
@@ -59,9 +55,9 @@ public class MainWindow {
 
     public void setControllerConnected(boolean connected) {
         if(connected) {
-            btConnectController.setEnabled(false);
+            controllerState.setText("connected.");
         } else {
-            btConnectController.setEnabled(true);
+            controllerState.setText("not connected.");
         }
     }
 
@@ -134,7 +130,6 @@ public class MainWindow {
     private JComboBox cbCommPorts;
     private JButton btRefreshArduino;
     private JButton btConnectArduino;
-    private JButton btConnectController;
     private JLabel controllerState;
     private JPanel directControlTab;
 }

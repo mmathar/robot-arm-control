@@ -1,10 +1,8 @@
 package com.me;
 
-import com.github.strikerx3.jxinput.XInputAxesDelta;
-import com.github.strikerx3.jxinput.XInputButtonsDelta;
-import com.github.strikerx3.jxinput.XInputComponentsDelta;
-import com.github.strikerx3.jxinput.XInputDevice;
+import com.github.strikerx3.jxinput.*;
 import com.github.strikerx3.jxinput.enums.XInputButton;
+import com.github.strikerx3.jxinput.listener.XInputDeviceListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,9 +22,9 @@ public class Main {
         onWantToRefreshCOMListing();
 
         while (frame.isVisible()) {
+            readControllerInput();
             if (connection.isConnected()) {
                 connection.readMessages();
-                readControllerInput();
                 sendUpdatedPosition();
             }
             waitABit();
@@ -52,17 +50,9 @@ public class Main {
     }
 
     void setupUIListeners() {
-        // this has a dual function: connect / disconnect
-        // (the button changes its text depending on context)
-        window.addControllerConnectListener(x -> {
-            if (controller == null)
-                onWantToConnectController();
-            else
-                onWantToDisconnectController();
-        });
         // dual function too. see above
         window.addCommPortConnectListener(x -> {
-            if(connectedCOM)
+            if (connectedCOM)
                 onWantToDisconnectCOM();
             else
                 onWantToConnectCOM();
@@ -93,49 +83,35 @@ public class Main {
         connectedCOM = false;
     }
 
-    void onWantToConnectController() {
+    void createConnection() {
+        connection = new SerialConnection();
+    }
+
+    void tryFindGamepad() {
         try {
-            XInputDevice[] devices = XInputDevice.getAllDevices();
-            for (XInputDevice device : devices) {
-                if (device.isConnected()) {
-                    controller = device;
-                    break;
-                }
+            boolean oldState = controller != null && controller.isConnected();
+            controller = XInputDevice14.getDeviceFor(0);
+            // did the connection state change? show it in the UI!
+            if(controller.isConnected() != oldState) {
+                window.setControllerConnected(controller.isConnected());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        if (controller == null) {
-            window.printMessage("No controller found.", true);
-            window.setControllerConnected(false);
-        } else {
-            window.printMessage("Controller connected.", false);
-            window.setControllerConnected(true);
-        }
-    }
-
-    void onWantToDisconnectController() {
-        controller = null;
-        window.setControllerConnected(false);
-    }
-
-    void createConnection() {
-        connection = new SerialConnection();
     }
 
     // calculate the necessary movement from the controller stick
     // position changes. Only works if a controller is connected.
     private void readControllerInput() {
-        if (controller == null)
-            return;
+        // get the best connected gamepad (hot-plug support)
+        // Is it inefficient to do this every frame? Possibly.
+        // Does it work any other way? Not for me.
+        // I tried XInputDeviceListener but the events connected / disconnected just never seem to fire...
+        // So here we are.
+        tryFindGamepad();
 
-        if (!controller.poll()) {
-            // the controller appears to have been disconnected
-            window.setControllerConnected(false);
-            controller = null;
+        if(!controller.poll())
             return;
-        }
 
         deltaGripper = 0.0f;
         deltaBase = 0.0f;
@@ -166,7 +142,7 @@ public class Main {
         }
 
         if (Math.abs(stickPosRY) > 1e-1) {
-            deltaHeight = 1.0f * stickPosRY;
+            deltaHeight = -1.0f * stickPosRY;
         }
     }
 
@@ -215,7 +191,7 @@ public class Main {
     private float deltaDistance = 0.0f;
     private float deltaHeight = 0.0f;
 
-    private XInputDevice controller;
+    private XInputDevice14 controller;
     private float stickPosLX = 0.0f;
     private float stickPosLY = 0.0f;
     private float stickPosRY = 0.0f;

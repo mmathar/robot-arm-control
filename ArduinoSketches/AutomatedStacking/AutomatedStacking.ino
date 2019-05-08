@@ -52,7 +52,7 @@ void loop()
 { 
   arm.setDirectBaseRotation(10.0f);
   moveToCube(4);
-  delay(10000);
+  delay(1000);
 
   arm.returnToRest();
 

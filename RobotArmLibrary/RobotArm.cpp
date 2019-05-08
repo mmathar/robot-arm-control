@@ -60,7 +60,7 @@ namespace RobotTools
         mainArmMotor.setMaximum(420, 50);
         mainArmMotor.setRestPosition(0);   
         // The gripper has an opening (half-)angle of 90° (open) and a value of 0° closed
-        gripperMotor.setMinimum(120, 0);
+        gripperMotor.setMinimum(200, 0);
         gripperMotor.setMaximum(400, 90);
         gripperMotor.setRestPosition(90); // in the rest position the gripper is open
     }
