@@ -63,8 +63,6 @@ namespace RobotTools
        void setDirectGripperRotation(const double value);
     
       private:
-        void projectIntoWorkingArea(GripperPosition& position);
-        void initializeWorkArea();
         float calculateDistance(float alpha, float beta);
         float calculateHeight(float alpha, float beta);
         void updateCurrentPosition();

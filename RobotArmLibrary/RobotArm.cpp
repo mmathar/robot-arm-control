@@ -19,20 +19,8 @@ namespace RobotTools
         , smallArmMotor(driver, SERVO_1)
         , gripperMotor(driver, SERVO_3)
         , currentPosition{0.0, 0.0, 0.0}
-        //, workAreaEdges({})
     {
     }
-
-    /*void RobotArm::initializeWorkArea()
-    {
-        for(int i = 0; i < 10; i++) 
-        {
-            float beta = mainArmMotor.getMinimumAngle() + (mainArmMotor.getMaximumAngle() - mainArmMotor.getMinimumAngle()) / 9.0f * i;
-            Vector2 position = calcPosition(0.0f, beta);
-            Vector2 positionNext = calcPosition(0.0f, beta + 5.0f);
-            Edge edge = 
-        }
-    }*/
 
     /*!  The specs in this method need to be tuned according to your specific motor.
     * e.g. 
@@ -176,31 +164,14 @@ namespace RobotTools
         currentPosition.height = calculateHeight(alpha, beta);
     }
 
-
-    void RobotArm::projectIntoWorkingArea(GripperPosition& position) 
-    {
-        float distanceDelta = position.distance - currentPosition.distance;
-        float heightDelta = position.height - currentPosition.height;
-
-        // upper right "quadrant"
-        if(position.distance >= position.height) 
-        {
-
-        }
-        else 
-        {
-            // ... 3 other cases
-        }
-    }
-
     void RobotArm::openGripper()
     {
-        gripperMotor.rotateTo(90);
+        gripperMotor.rotateTo(0);
     }
 
     void RobotArm::closeGripper()
     {
-        gripperMotor.rotateTo(0);
+        gripperMotor.rotateTo(90);
     }
 
     bool RobotArm::isGripperOpen()

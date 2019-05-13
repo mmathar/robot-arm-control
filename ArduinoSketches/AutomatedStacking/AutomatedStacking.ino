@@ -2,210 +2,110 @@
 
 RobotTools::RobotArm arm;
 
+// move to grab cube from stack (index 0 is the bottom of the stack
+void moveToCube(int index)
+{
+  RobotTools::GripperPosition position = arm.getCurrentPosition();
+  position.distance = 5.0;
+  position.height = 14.7 - 2.4f * index;
+  position = arm.moveGripperTo(position);
+  delay(500);
+}
+
+void openGripper()
+{
+  arm.openGripper();
+  delay(500);
+}
+
+void closeGripper()
+{
+  arm.closeGripper();
+  delay(500);
+}
+
+void liftUpAndBack()
+{
+  RobotTools::GripperPosition position = arm.getCurrentPosition();
+  position.height = 0;
+  position = arm.moveGripperTo(position);
+  delay(500);
+  position.moveBackward(5.0);
+  arm.moveGripperTo(position);
+  delay(500);
+}
+
+void putDown()
+{
+  RobotTools::GripperPosition position = arm.getCurrentPosition();
+  position.moveDown(3.0);
+  position = arm.moveGripperTo(position);
+  delay(500);
+}
+
+void rotateLeft()
+{
+  arm.setDirectBaseRotation(-15.0f);
+  delay(500);
+}
+
+void rotateRight()
+{
+  arm.setDirectBaseRotation(15.0f);
+  delay(500);
+}
+
+
 void setup() {
   Serial.begin(9600);
   arm.setup();
   delay(10);
   arm.returnToRest();
-}
-
-// move to grab cube from stack (index 0 is the bottom of the stack
-void moveToCube(int index)
-{
-  RobotTools::GripperPosition position = arm.getCurrentPosition();
-  position.moveForward(5.0);
-  position.moveDown(11.0 - index * 1.7f);
-  position = arm.moveGripperTo(position);
-  delay(500);
-  position.moveDown(1.0);
-  position.moveForward(1.0);
-  position = arm.moveGripperTo(position);
-  delay(500);
-}
-
-void moveBackFromCube(int index)
-{
-  RobotTools::GripperPosition position = arm.getCurrentPosition();
-  position.moveUp(1.0);
-  position.moveBackward(1.0);
-  position = arm.moveGripperTo(position);
-  delay(500);
-  position.moveBackward(5.0);
-  position.moveUp(11.0 - index * 1.7f);
-  position = arm.moveGripperTo(position);
-  delay(500);
-}
-
-void openGripper()
-{
-  arm.openGripper();
-  delay(500);
-}
-
-void closeGripper()
-{
-  arm.closeGripper();
-  delay(500);
-}
-
-void loop()
-{ 
-  arm.setDirectBaseRotation(10.0f);
-  moveToCube(4);
+  openGripper();
   delay(1000);
-
-  arm.returnToRest();
-
-  delay(2000);
-
-  for(int j = 0; j < 1000; j++)
-  {  
-  for(int i = 0; i < 5; i++)
-  {
-    arm.setDirectBaseRotation(10.0f);
-    delay(500);
-    moveToCube(4 - i);
-    closeGripper();  
-    moveBackFromCube(4 - i);
-
-    arm.setDirectBaseRotation(-10.0f);
-    delay(500);
-    moveToCube(i);
-    openGripper();
-    moveBackFromCube(i);
-
-    arm.setDirectSmallArmRotation(90.0f);
-    arm.setDirectMainArmRotation(0.0f);
-  }
-  
-  delay(1000);
-  arm.returnToRest();
-  delay(1000);
-
-  for(int i = 0; i < 5; i++)
-  {
-    arm.setDirectBaseRotation(-10.0f);
-    delay(500);
-    moveToCube(4 - i);
-    closeGripper();  
-    moveBackFromCube(4 - i);
-  
-    arm.setDirectBaseRotation(10.0f);
-    delay(500);
-    moveToCube(i);
-    openGripper();
-    moveBackFromCube(i);
-
-    arm.setDirectSmallArmRotation(90.0f);
-    arm.setDirectMainArmRotation(0.0f);
-  }
-
-  delay(1000);
-  arm.returnToRest();
-  delay(1000);
-}
-
-
-  delay(5000);
-}
-
-/*
-// move to grab cube from stack (index 0 is the bottom of the stack
-void moveToCube(int index)
-{
-  RobotTools::GripperPosition position = arm.getCurrentPosition();
-  position.moveForward(5.0);
-  position.moveDown(10.7 - index * 2.2f);
-  position = arm.moveGripperTo(position);
-  delay(500);
-  position.moveDown(1.0);
-  position.moveForward(1.0);
-  position = arm.moveGripperTo(position);
-  delay(500);
-}
-
-void moveBackFromCube(int index)
-{
-  RobotTools::GripperPosition position = arm.getCurrentPosition();
-  position.moveUp(1.0);
-  position.moveBackward(1.0);
-  position = arm.moveGripperTo(position);
-  delay(500);
-  position.moveBackward(5.0);
-  position.moveUp(10.7 - index * 2.2f);
-  position = arm.moveGripperTo(position);
-  delay(500);
-}
-
-void openGripper()
-{
-  arm.openGripper();
-  delay(500);
-}
-
-void closeGripper()
-{
-  arm.closeGripper();
-  delay(500);
-}
-
-void loop()
-{ 
-  arm.setDirectBaseRotation(10.0f);
+  rotateRight();
   moveToCube(4);
   delay(10000);
-
+  liftUpAndBack();
+  delay(500);
   arm.returnToRest();
-
+  openGripper();
   delay(2000);
-
-  for(int j = 0; j < 1000; j++)
-  {  
-  for(int i = 0; i < 5; i++)
-  {
-    arm.setDirectBaseRotation(10.0f);
-    delay(500);
-    moveToCube(4 - i);
-    closeGripper();  
-    moveBackFromCube(4 - i);
-
-    arm.setDirectBaseRotation(-10.0f);
-    delay(500);
-    moveToCube(i);
-    openGripper();
-    moveBackFromCube(i);
-
-    arm.setDirectSmallArmRotation(90.0f);
-    arm.setDirectMainArmRotation(0.0f);
-  }
-  
-  delay(1000);
-  arm.returnToRest();
-  delay(1000);
-
-  for(int i = 0; i < 5; i++)
-  {
-    arm.setDirectBaseRotation(-10.0f);
-    delay(500);
-    moveToCube(4 - i);
-    closeGripper();  
-    moveBackFromCube(4 - i);
-  
-    arm.setDirectBaseRotation(10.0f);
-    delay(500);
-    moveToCube(i);
-    openGripper();
-    moveBackFromCube(i);
-
-    arm.setDirectSmallArmRotation(90.0f);
-    arm.setDirectMainArmRotation(0.0f);
-  }
-
-  delay(1000);
-  arm.returnToRest();
-  delay(1000);
 }
 
+void loop()
+{  
+  // stack to the left
+  for(int i = 4; i >= 0; i--)
+  {
+    rotateRight();
+    moveToCube(i);
+    //putDown();
+    closeGripper();
+    liftUpAndBack();
+    
+    rotateLeft();
+    moveToCube(4 - i);
+    //putDown();
+    openGripper();   
+    liftUpAndBack(); 
+  }
 
-  delay(5000);
-}*/
+  delay(500);
+
+  // stack to the right
+  for(int i = 4; i >= 0; i--)
+  {
+    rotateLeft();
+    moveToCube(i);
+    //putDown();
+    closeGripper();
+    liftUpAndBack();
+    
+    rotateRight();
+    moveToCube(4 - i);
+    //putDown();
+    openGripper();   
+    liftUpAndBack(); 
+  }
+}

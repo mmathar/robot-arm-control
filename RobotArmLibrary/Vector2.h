@@ -14,6 +14,10 @@ namespace RobotTools
 
         float x, y;
     }; // struct Vector2
+
+    Vector2 operator*(float value, const Vector2& v);
+    Vector2 operator+(const Vector2& a, const Vector2& b);
+
 }; // namespace RobotTools
 
 #endif // VECTOR2_H
