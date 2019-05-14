@@ -60,6 +60,7 @@ public class Main {
                 onWantToConnectCOM();
         });
         window.addCommPortRefreshListener(x -> onWantToRefreshCOMListing());
+        window.addQueryPositionListener(x -> sendGETPositionMessage());
     }
 
     void onWantToRefreshCOMListing() {
@@ -132,19 +133,19 @@ public class Main {
 
         // left stick right -> gripper right
         if (Math.abs(stickPosLX) > 1e-1) {
-            deltaBase = -3.5f * stickPosLX;
+            deltaBase = -2.5f * stickPosLX;
             dirtyControllerInput = true;
         }
 
         // left stick up -> gripper forward
         if (Math.abs(stickPosLY) > 1e-1) {
-            deltaDistance = -1.0f * stickPosLY;
+            deltaDistance = -0.7f * stickPosLY;
             dirtyControllerInput = true;
         }
 
         // right stick up = gripper up
         if (Math.abs(stickPosRY) > 1e-1) {
-            deltaHeight = 1.0f * stickPosRY;
+            deltaHeight = 0.7f * stickPosRY;
             dirtyControllerInput = true;
         }
     }
@@ -168,6 +169,11 @@ public class Main {
 
         dirtyDirectInput = false;
         dirtyControllerInput = false;
+    }
+
+    private void sendGETPositionMessage() {
+        SerialConnection.MessageGET msg = connection.new MessageGET();
+        connection.sendMessage((SerialConnection.Message) msg);
     }
 
     private void waitABit() {

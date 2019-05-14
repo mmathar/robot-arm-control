@@ -23,6 +23,10 @@ public class MainWindow {
         btConnectArduino.addActionListener(listener);
     }
 
+    public void addQueryPositionListener(ActionListener listener) {
+        btQueryPosition.addActionListener(listener);
+    }
+
     public void addAngleSliderListener(ChangeListener listener) {
         // If the sliders for the angles are moved we need to know
         // (because this should override any controller input)
@@ -44,6 +48,7 @@ public class MainWindow {
             sliderDirectMainArm.setEnabled(true);
             sliderDirectGripper.setEnabled(true);
             sliderDirectRotation.setEnabled(true);
+            btQueryPosition.setEnabled(true);
         } else {
             btConnectArduino.setText("Connect");
             btRefreshArduino.setEnabled(true);
@@ -52,6 +57,7 @@ public class MainWindow {
             sliderDirectMainArm.setEnabled(false);
             sliderDirectGripper.setEnabled(false);
             sliderDirectRotation.setEnabled(false);
+            btQueryPosition.setEnabled(false);
         }
     }
 
@@ -129,4 +135,5 @@ public class MainWindow {
     private JButton btConnectArduino;
     private JLabel controllerState;
     private JPanel directControlTab;
+    private JButton btQueryPosition;
 }

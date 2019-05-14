@@ -15,10 +15,10 @@ void setup() {
 void processGet()
 {
     RobotTools::GripperPosition position = arm.getCurrentPosition();
-    String s = "RETURN printout:\n";
-    s += String("   ") + position.rotation + "\n";
-    s += String("   ") + position.distance + "\n";
-    s += String("   ") + position.height + " \n";
+    String s = "RETURN printout: {";
+    s += String("position: ") + position.rotation + ", ";
+    s += String("distance: ") + position.distance + ", ";
+    s += String("height: ") + position.height + "};";
     Serial.write(s.c_str());
 }
 

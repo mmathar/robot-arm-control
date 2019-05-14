@@ -77,6 +77,14 @@ public class SerialConnection {
         }
     };
 
+    // query the robots current internal positions/angles/properties...
+    public class MessageGET implements  Message {
+
+        public String serialize() {
+            return "GET;";
+        }
+    };
+
     public interface EventListener {
         void event(String msg, boolean error);
     };
@@ -134,7 +142,7 @@ public class SerialConnection {
             return;
 
         try {
-            if (comPort.bytesAvailable() <= 0 || comPort.bytesAvailable() % 4 != 0)
+            if (comPort.bytesAvailable() <= 0)
                 return;
 
             byte[] buffer = new byte[comPort.bytesAvailable()];

@@ -6,8 +6,10 @@ RobotTools::RobotArm arm;
 void moveToCube(int index)
 {
   RobotTools::GripperPosition position = arm.getCurrentPosition();
-  position.distance = 5.0;
-  position.height = 14.7 - 2.4f * index;
+  position.distance = 6.37;
+  position.height = 15.0 - 2.5f * index;
+  position.height -= 3.0; // initially aim for a bit higher so we can softly put it down
+  
   position = arm.moveGripperTo(position);
   delay(500);
 }
@@ -24,6 +26,7 @@ void closeGripper()
   delay(500);
 }
 
+// "gently" lift the cube upwards at first
 void liftUpAndBack()
 {
   RobotTools::GripperPosition position = arm.getCurrentPosition();
@@ -35,7 +38,8 @@ void liftUpAndBack()
   delay(500);
 }
 
-void putDown()
+
+void lowerGripper()
 {
   RobotTools::GripperPosition position = arm.getCurrentPosition();
   position.moveDown(3.0);
@@ -80,13 +84,13 @@ void loop()
   {
     rotateRight();
     moveToCube(i);
-    //putDown();
+    lowerGripper();
     closeGripper();
     liftUpAndBack();
     
     rotateLeft();
     moveToCube(4 - i);
-    //putDown();
+    lowerGripper();
     openGripper();   
     liftUpAndBack(); 
   }
@@ -98,13 +102,13 @@ void loop()
   {
     rotateLeft();
     moveToCube(i);
-    //putDown();
+    lowerGripper();
     closeGripper();
     liftUpAndBack();
     
     rotateRight();
     moveToCube(4 - i);
-    //putDown();
+    lowerGripper();
     openGripper();   
     liftUpAndBack(); 
   }
