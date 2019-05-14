@@ -7,10 +7,13 @@ void moveToCube(int index)
 {
   RobotTools::GripperPosition position = arm.getCurrentPosition();
   position.distance = 6.37;
-  position.height = 15.0 - 2.5f * index;
+  // the height-axis is upside down! 0 is the height of the robots resting position!
+  // 15.0 is the "ground plane" the cubes are resting on
+  // 2.5 is the height of a single cube
+  position.height = 15.0 - 2.5f * index; // 15.0 is the
   position.height -= 3.0; // initially aim for a bit higher so we can softly put it down
   
-  position = arm.moveGripperTo(position);
+  arm.moveGripperTo(position);
   delay(500);
 }
 
@@ -26,13 +29,14 @@ void closeGripper()
   delay(500);
 }
 
-// "gently" lift the cube upwards at first
+// "gently" lift the cube upwards at first and then move backwards
 void liftUpAndBack()
 {
   RobotTools::GripperPosition position = arm.getCurrentPosition();
   position.height = 0;
   position = arm.moveGripperTo(position);
   delay(500);
+  
   position.moveBackward(5.0);
   arm.moveGripperTo(position);
   delay(500);
@@ -43,7 +47,7 @@ void lowerGripper()
 {
   RobotTools::GripperPosition position = arm.getCurrentPosition();
   position.moveDown(3.0);
-  position = arm.moveGripperTo(position);
+  arm.moveGripperTo(position);
   delay(500);
 }
 
@@ -65,11 +69,18 @@ void setup() {
   arm.setup();
   delay(10);
   arm.returnToRest();
+  // the gripper is closed by default - need to open it
   openGripper();
   delay(1000);
+
+  // move towards the top-most cube on the right
+  // and wait a bit so one of the humans can position
+  // the initial stack of cubes there
   rotateRight();
   moveToCube(4);
   delay(10000);
+
+  // move to the starting position
   liftUpAndBack();
   delay(500);
   arm.returnToRest();
@@ -79,15 +90,17 @@ void setup() {
 
 void loop()
 {  
-  // stack to the left
+  // move the stack from the right to the left
   for(int i = 4; i >= 0; i--)
   {
+    // take cube i from the right
     rotateRight();
     moveToCube(i);
     lowerGripper();
     closeGripper();
     liftUpAndBack();
-    
+
+    // put cube i to the left
     rotateLeft();
     moveToCube(4 - i);
     lowerGripper();
@@ -97,15 +110,17 @@ void loop()
 
   delay(500);
 
-  // stack to the right
+  // move the stack back from the left to the rigth
   for(int i = 4; i >= 0; i--)
   {
+    // take cube i from the left
     rotateLeft();
     moveToCube(i);
     lowerGripper();
     closeGripper();
     liftUpAndBack();
-    
+
+    // put cube i to the right
     rotateRight();
     moveToCube(4 - i);
     lowerGripper();
