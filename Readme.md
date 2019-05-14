@@ -1,6 +1,9 @@
 # robot-arm-control
 Custom (non-official) code for having fun with the EEZYbotARM MK2. 
 
+## Youtube-Video (click)
+[![Watch the video](https://img.youtube.com/vi/LWbK3SZWLdg/hqdefault.jpg)](https://youtu.be/LWbK3SZWLdg)
+
 ## Hardware used
 * [EEZYbotARM MK2 by daGHIZmo](http://www.eezyrobots.it/eba_mk2.html)
 * [Modified V-gripper by Runkel](https://www.thingiverse.com/thing:2414264) (original: [Vector concept gripper by RubisTechnologies](https://www.thingiverse.com/thing:66818/makes))
