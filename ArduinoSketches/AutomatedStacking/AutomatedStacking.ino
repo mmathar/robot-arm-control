@@ -2,6 +2,14 @@
 
 RobotTools::RobotArm arm;
 
+/* Sketch description:
+ *  
+ * The robot takes a stack of 5 2.5cm cubes and stacks it from the right to the left.
+ * At startup the robot also moves it's gripper towards the position of the top  
+ * of the right cube-stack for 10 seconds so someone can put the stack of cubes
+ * in the right spot.
+ */
+
 // move to grab cube from stack (index 0 is the bottom of the stack
 void moveToCube(int index)
 {

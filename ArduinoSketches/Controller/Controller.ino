@@ -4,6 +4,16 @@
 RobotTools::RobotArm arm;
 RobotTools::SerialConnection connection;
 
+/* Sketch description:
+ *  
+ * Wait for input from the Serial connection and react to it.
+ * This input can: 
+ *    1. set the position of the gripper (in robot-[polar]-coordinates)
+ *    2. update the position of the gripper (in robot-[polar]-coordinates)
+ *    3. set the individual angles for every servo    
+ *    4. request a print-out of the robot's internal coordinates
+ */
+
 void setup() {
   connection.setup();
   arm.setup();
