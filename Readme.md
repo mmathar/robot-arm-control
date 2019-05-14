@@ -8,6 +8,7 @@ Custom (non-official) code for having fun with the EEZYbotARM MK2.
 * Printed on an Ender 3
 * Arduino Uno
 * Adafruit PCA9685 16-Channel Servo Driver (wired up like [this](https://learn.adafruit.com/16-channel-pwm-servo-driver/using-the-adafruit-library))
+* 4x [TowerPro MG996R Servo](https://servodatabase.com/servo/towerpro/mg996r)
 
 ## Directory structure
 1. **ArduinoSketches**: *.ino sketch files (for upload to the Arduino)
