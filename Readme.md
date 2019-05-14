@@ -12,7 +12,7 @@ Custom (non-official) code for having fun with the EEZYbotARM MK2.
 ## Directory structure
 1. **ArduinoSketches**: *.ino sketch files (for upload to the Arduino)
 2. **RobotArmLibrary**: Arduino library which simplifies sending commands to the robot
-3. **UserInterface**: Java application which can control the robot arm (using UI sliders or a XBox controller) via the serial connection. (Provided the corresponding sketch in ArduinoSketches/RemoteControl is loaded on the microcontroller.)
+3. **UserInterface**: Java application which can control the robot arm (using UI sliders or a XBox controller) via the serial connection. (Provided the corresponding sketch in ArduinoSketches/Controller is loaded on the microcontroller.)
 
 ## Can I use this?
 Feel free to use parts/all of the code as you wish. One word of warning though: The code may or may not work for you because it is calibrated for my specific hardware. Using it with different servos requires re-calibration. For that please take a look at _RobotArmLibrary/RobotArm.cpp_ (specifically the constructor and setup method). The IDs for the servos and the minimum/maximum PWM values probably need to be recalibrated.
