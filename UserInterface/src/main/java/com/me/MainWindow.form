@@ -44,8 +44,7 @@
                       <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <icon value="com/sun/javafx/scene/web/skin/Redo_16x16_JFX.png"/>
-                      <text value=""/>
+                      <text value="Refresh"/>
                     </properties>
                   </component>
                   <component id="381" class="javax.swing.JButton" binding="btConnectArduino">
